@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoshMap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dark: #0a0a0a;
+            --red: #ff2a2a;
+            --red-dark: #cc0000;
+            --gray: #1a1a1a;
+            --light: #f0f0f0;
+            --border: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none; 
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin: 20px 0 40px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #ff2a2a 0%, #ff6a6a 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 42, 42, 0.3);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .gps-o {
+            position: relative;
+            display: inline-block;
+            width: 0.8em;
+            height: 0.8em;
+            margin: 0 2px;
+        }
+
+        .gps-o::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--red);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--red);
+            z-index: 1;
+        }
+
+        .gps-o::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40%;
+            height: 40%;
+            background: white;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .gps-pointer {
+            position: absolute;
+            bottom: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 0.3em solid transparent;
+            border-right: 0.3em solid transparent;
+            border-top: 0.5em solid var(--red);
+            z-index: 3;
+        }
+
+        .upload-section {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--gray);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .custom-button {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+            color: var(--light);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 42, 42, 0.3);
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .custom-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 42, 42, 0.4);
+        }
+
+        .custom-button:active {
+            transform: translateY(1px);
+        }
+
+        .custom-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                          rgba(255,255,255,0) 0%, 
+                          rgba(255,255,255,0.2) 50%, 
+                          rgba(255,255,255,0) 100%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .custom-button:hover::after {
+            transform: translateX(100%);
+        }
+
+        .save-section {
+            display: none;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Template Editor Styles */
+        .template-editor {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--gray);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .editor-row {
+            margin-bottom: 15px;
+        }
+
+        .editor-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .editor-input {
+            width: 100%;
+            padding: 12px;
+            background-color: #222;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .map-upload-container {
+            margin: 20px 0;
+        }
+
+        #mapFileInput {
+            display: none;
+        }
+
+        .final-preview {
+            position: relative;
+            margin: 25px auto;
+            max-width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        #finalImage {
+            width: 100%;
+            display: block;
+        }
+
+        .template-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.4;
+        }
+
+        .map-container {
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--red);
+            float: left;
+            margin-right: 15px;
+            background-color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mapImage {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .details-container {
+            overflow: hidden;
+        }
+
+        .template-overlay h3 {
+            margin: 0 0 4px 0;
+            color: var(--red);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .template-overlay .address {
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .template-overlay .pincode {
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .template-overlay .coordinates {
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .template-overlay .date {
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            text-align: center;
+            color: var(--light);
+            font-size: 0.9rem;
+            opacity: 0.7;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes pulse-gps {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background-color: var(--gray);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            border: 1px solid var(--red);
+            box-shadow: 0 0 40px var(--red);
+            animation: pulse 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-style: preserve-3d;
+        }
+
+        .modal h2 {
+            color: var(--red);
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .modal p {
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .close-modal {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+            color: var(--light);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 42, 42, 0.3);
+        }
+
+        .close-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 42, 42, 0.4);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.8rem;
+            }
+            
+            .upload-section, .template-editor {
+                padding: 25px;
+            }
+            
+            .custom-button {
+                padding: 16px;
+            }
+            
+            .template-overlay {
+                padding: 12px;
+            }
+            
+            .map-container {
+                width: 70px;
+                height: 70px;
+                margin-right: 10px;
+            }
+            
+            .template-overlay h3 {
+                font-size: 0.95rem;
+            }
+            
+            .template-overlay .address,
+            .template-overlay .pincode,
+            .template-overlay .coordinates,
+            .template-overlay .date {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>J<span class="gps-o"><span class="gps-pointer"></span></span>SHMAP</h1>
+        </div>
+    </header>
+
+    <main>
+        <section class="upload-section">
+            <input type="file" id="fileInput" accept="image/*">
+            <label for="fileInput" class="custom-button">CHOOSE PHOTO</label>
+        </section>
+
+        <section class="template-editor" id="templateEditor">
+            <div class="editor-row">
+                <label class="editor-label">Location Title</label>
+                <input type="text" class="editor-input" id="locationTitle" value="Current location">
+            </div>
+            <div class="editor-row">
+                <label class="editor-label">Street Address</label>
+                <input type="text" class="editor-input" id="streetAddress" placeholder="Enter street address">
+            </div>
+            <div class="editor-row">
+                <label class="editor-label">Pincode</label>
+                <input type="text" class="editor-input" id="pincode" placeholder="Enter pincode">
+            </div>
+            <div class="editor-row">
+                <label class="editor-label">Latitude</label>
+                <input type="text" class="editor-input" id="latitude" value="12.27933">
+            </div>
+            <div class="editor-row">
+                <label class="editor-label">Longitude</label>
+                <input type="text" class="editor-input" id="longitude" value="76.71011">
+            </div>
+            <div class="editor-row">
+                <label class="editor-label">Date</label>
+                <input type="text" class="editor-input" id="date" value="">
+            </div>
+            
+            <div class="map-upload-container">
+                <label class="editor-label">Map Image (Optional)</label>
+                <input type="file" id="mapFileInput" accept="image/*">
+                <label for="mapFileInput" class="custom-button" style="margin-top: 10px;">UPLOAD MAP IMAGE</label>
+            </div>
+            
+            <div class="final-preview">
+                <img id="finalImage" alt="Final composition preview">
+                <div class="template-overlay" id="templateOverlay">
+                    <div class="map-container">
+                        <img id="mapImage" src="" alt="Map preview">
+                    </div>
+                    <div class="details-container">
+                        <h3 id="overlayTitle">Current location</h3>
+                        <div class="address" id="overlayAddress"></div>
+                        <div class="pincode" id="overlayPincode"></div>
+                        <div class="coordinates">Lat <span id="overlayLat">12.27933</span>° Long <span id="overlayLng">76.71011</span>°</div>
+                        <div class="date" id="overlayDate"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="save-section">
+            <button id="saveButton" class="custom-button">SAVE PHOTO WITH LOCATION</button>
+        </div>
+    </main>
+
+    <footer>
+        © 2025 JOSHMAP. ALL RIGHTS RESERVED.
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <h2>SUCCESS!</h2>
+            <p>Your image has been saved with location details.</p>
+            <button class="close-modal" onclick="closeModal()">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const saveSection = document.querySelector('.save-section');
+        const saveButton = document.getElementById('saveButton');
+        const successModal = document.getElementById('successModal');
+        const gpsO = document.querySelector('.gps-o');
+        const templateEditor = document.getElementById('templateEditor');
+        const finalImage = document.getElementById('finalImage');
+        const mapFileInput = document.getElementById('mapFileInput');
+        const mapImage = document.getElementById('mapImage');
+        
+        // Template editor elements
+        const locationTitleInput = document.getElementById('locationTitle');
+        const streetAddressInput = document.getElementById('streetAddress');
+        const pincodeInput = document.getElementById('pincode');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const dateInput = document.getElementById('date');
+        const overlayTitle = document.getElementById('overlayTitle');
+        const overlayAddress = document.getElementById('overlayAddress');
+        const overlayPincode = document.getElementById('overlayPincode');
+        const overlayLat = document.getElementById('overlayLat');
+        const overlayLng = document.getElementById('overlayLng');
+        const overlayDate = document.getElementById('overlayDate');
+
+        // Initialize with current date/time
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            dateInput.value = formatDate(now);
+            updateTemplateOverlay();
+        });
+
+        // Add pulsing animation to GPS icon
+        setInterval(() => {
+            gpsO.style.animation = 'pulse-gps 1.5s infinite';
+        }, 2000);
+
+        // Event listeners for template editor inputs
+        [locationTitleInput, streetAddressInput, pincodeInput, latitudeInput, longitudeInput, dateInput].forEach(input => {
+            input.addEventListener('input', updateTemplateOverlay);
+        });
+
+        // Event listener for main file input change
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    finalImage.src = e.target.result;
+                    templateEditor.style.display = 'block';
+                    saveSection.style.display = 'block';
+                    
+                    // Try to get current location if available
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            position => {
+                                latitudeInput.value = position.coords.latitude.toFixed(5);
+                                longitudeInput.value = position.coords.longitude.toFixed(5);
+                                
+                                // Try to reverse geocode to get address and pincode
+                                reverseGeocode(position.coords.latitude, position.coords.longitude)
+                                    .then(data => {
+                                        if (data.address) {
+                                            streetAddressInput.value = data.address;
+                                        }
+                                        if (data.pincode) {
+                                            pincodeInput.value = data.pincode;
+                                        }
+                                        updateTemplateOverlay();
+                                        
+                                        // Try to get static map image
+                                        getStaticMapImage(position.coords.latitude, position.coords.longitude)
+                                            .then(mapUrl => {
+                                                mapImage.src = mapUrl;
+                                                updateFinalPreview();
+                                            });
+                                    });
+                            },
+                            error => {
+                                console.log("Geolocation error:", error);
+                                updateTemplateOverlay();
+                            }
+                        );
+                    } else {
+                        updateTemplateOverlay();
+                    }
+                    
+                    // Set current date/time
+                    const now = new Date();
+                    dateInput.value = formatDate(now);
+                    updateTemplateOverlay();
+                    updateFinalPreview();
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Event listener for map image upload
+        mapFileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    mapImage.src = e.target.result;
+                    updateFinalPreview();
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Update the template overlay with current values
+        function updateTemplateOverlay() {
+            overlayTitle.textContent = locationTitleInput.value;
+            overlayAddress.textContent = streetAddressInput.value;
+            overlayPincode.textContent = pincodeInput.value;
+            overlayLat.textContent = latitudeInput.value;
+            overlayLng.textContent = longitudeInput.value;
+            overlayDate.textContent = dateInput.value;
+            updateFinalPreview();
+        }
+
+        // Update the final preview composition
+        function updateFinalPreview() {
+            if (finalImage.src && finalImage.src !== '') {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Set canvas dimensions to match image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw the original image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Calculate overlay dimensions
+                    const overlayHeight = Math.max(100, img.height * 0.2);
+                    const fontSize = Math.max(10, img.width * 0.012);
+                    const titleFontSize = fontSize * 1.2;
+                    const padding = 10;
+                    const mapSize = 80;
+                    const mapX = padding;
+                    const mapY = img.height - overlayHeight + (overlayHeight - mapSize) / 2;
+                    
+                    // Draw overlay background
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(0, img.height - overlayHeight, img.width, overlayHeight);
+                    
+                    // Draw map container
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(mapX, mapY, mapSize, mapSize);
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(mapX, mapY, mapSize, mapSize);
+                    
+                    if (mapImage.src && mapImage.src !== '') {
+                        // Draw map image
+                        const mapImg = new Image();
+                        mapImg.onload = function() {
+                            ctx.drawImage(mapImg, mapX, mapY, mapSize, mapSize);
+                            drawTextElements();
+                            finalImage.src = canvas.toDataURL('image/jpeg', 0.9);
+                        };
+                        mapImg.src = mapImage.src;
+                    } else {
+                        // Draw placeholder text
+                        ctx.fillStyle = 'white';
+                        ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+                        ctx.textAlign = 'center';
+                        ctx.fillText('MAP', mapX + mapSize/2, mapY + mapSize/2);
+                        ctx.textAlign = 'left';
+                        drawTextElements();
+                        finalImage.src = canvas.toDataURL('image/jpeg', 0.9);
+                    }
+                    
+                    function drawTextElements() {
+                        // Set text styles
+                        ctx.fillStyle = 'white';
+                        ctx.font = `bold ${titleFontSize}px 'Courier New', monospace`;
+                        
+                        // Calculate text position
+                        const textX = mapX + mapSize + padding;
+                        let currentY = img.height - overlayHeight + padding + titleFontSize;
+                        
+                        // Draw title
+                        ctx.fillText(locationTitleInput.value, textX, currentY);
+                        
+                        // Draw address if available
+                        if (streetAddressInput.value) {
+                            ctx.font = `${fontSize}px 'Courier New', monospace`;
+                            currentY += (fontSize + 4);
+                            ctx.fillText(streetAddressInput.value, textX, currentY);
+                        }
+                        
+                        // Draw pincode if available
+                        if (pincodeInput.value) {
+                            currentY += (fontSize + 4);
+                            ctx.fillText(pincodeInput.value, textX, currentY);
+                        }
+                        
+                        // Draw coordinates
+                        currentY += (fontSize + 4);
+                        ctx.fillText(
+                            `Lat ${latitudeInput.value}° Long ${longitudeInput.value}°`,
+                            textX,
+                            currentY
+                        );
+                        
+                        // Draw date
+                        currentY += (fontSize + 4);
+                        ctx.fillText(dateInput.value, textX, currentY);
+                    }
+                };
+                
+                img.src = finalImage.src;
+            }
+        }
+
+        // Reverse geocode coordinates to get address and pincode
+        async function reverseGeocode(lat, lng) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await response.json();
+                
+                const result = {
+                    address: '',
+                    pincode: ''
+                };
+                
+                if (data.address) {
+                    const address = data.address;
+                    let fullAddress = '';
+                    
+                    if (address.road) fullAddress += address.road + ', ';
+                    if (address.suburb) fullAddress += address.suburb + ', ';
+                    if (address.city) fullAddress += address.city + ', ';
+                    if (address.state) fullAddress += address.state + ', ';
+                    if (address.country) fullAddress += address.country;
+                    
+                    result.address = fullAddress.replace(/,\s*$/, '');
+                    
+                    // Try to get pincode if available
+                    if (address.postcode) {
+                        result.pincode = address.postcode;
+                    }
+                }
+                return result;
+            } catch (error) {
+                console.error("Geocoding error:", error);
+                return { address: '', pincode: '' };
+            }
+        }
+
+        // Get static map image from coordinates
+        async function getStaticMapImage(lat, lng) {
+            // Using OpenStreetMap as a fallback since it doesn't require an API key
+            return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=200x200&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=YOUR_API_KEY`;
+            // Note: You'll need to replace YOUR_API_KEY with an actual Google Maps API key
+            // For production use, consider using Mapbox or another service that provides free tiers
+        }
+
+        // Format date as DD/MM/YYYY HH:MM
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+
+        // Save function to save the image with overlay
+        saveButton.addEventListener('click', function() {
+            if (finalImage.src && finalImage.src !== '') {
+                // Create download link
+                const link = document.createElement('a');
+                link.href = finalImage.src;
+                link.download = `joshmap-${locationTitleInput.value.toLowerCase().replace(/\s+/g, '-')}-${new Date().getTime()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Show success modal
+                showModal();
+            }
+        });
+
+        // Modal functions
+        function showModal() {
+            successModal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            successModal.style.animation = 'fadeIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                successModal.style.display = 'none';
+                successModal.style.animation = 'fadeIn 0.3s ease-out';
+            }, 300);
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === successModal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
