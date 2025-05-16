@@ -536,6 +536,17 @@
         const overlayLng = document.getElementById('overlayLng');
         const overlayDate = document.getElementById('overlayDate');
 
+        window.onload = function() {
+    // Check if the page has been refreshed already during this session
+    if (!sessionStorage.getItem('refreshed')) {
+      // Mark as refreshed
+      sessionStorage.setItem('refreshed', 'true');
+
+      // Refresh the page once
+      location.reload();
+    }
+  };
+
         // Initialize with current date/time
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
