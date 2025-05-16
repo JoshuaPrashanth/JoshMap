@@ -245,17 +245,20 @@
             right: 0;
             background: rgba(0, 0, 0, 0.7);
             color: white;
-            padding: 15px;
+            padding: 15px 20px;
             font-family: 'Courier New', monospace;
-            line-height: 1.4;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
         }
 
         .map-container {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border: 2px solid var(--red);
-            float: left;
             margin-right: 15px;
+            position: relative;
+            overflow: hidden;
             background-color: #111;
             display: flex;
             align-items: center;
@@ -269,33 +272,24 @@
         }
 
         .details-container {
-            overflow: hidden;
+            flex: 1;
         }
 
         .template-overlay h3 {
-            margin: 0 0 4px 0;
+            margin: 0 0 5px 0;
             color: var(--red);
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
         }
 
         .template-overlay .address {
-            margin-bottom: 4px;
-            font-size: 0.9rem;
+            margin-bottom: 3px;
+            font-size: 0.95rem;
         }
 
         .template-overlay .pincode {
-            margin-bottom: 4px;
-            font-size: 0.9rem;
-        }
-
-        .template-overlay .coordinates {
-            margin-bottom: 4px;
-            font-size: 0.9rem;
-        }
-
-        .template-overlay .date {
-            font-size: 0.9rem;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
         }
 
         footer {
@@ -408,23 +402,25 @@
             }
             
             .template-overlay {
-                padding: 12px;
+                padding: 12px 15px;
+                font-size: 0.9rem;
+                flex-direction: column;
+                align-items: flex-start;
             }
             
             .map-container {
-                width: 70px;
-                height: 70px;
-                margin-right: 10px;
+                width: 80px;
+                height: 80px;
+                margin-right: 0;
+                margin-bottom: 10px;
             }
             
             .template-overlay h3 {
-                font-size: 0.95rem;
+                font-size: 1rem;
             }
             
             .template-overlay .address,
-            .template-overlay .pincode,
-            .template-overlay .coordinates,
-            .template-overlay .date {
+            .template-overlay .pincode {
                 font-size: 0.85rem;
             }
         }
@@ -485,8 +481,8 @@
                         <h3 id="overlayTitle">Current location</h3>
                         <div class="address" id="overlayAddress"></div>
                         <div class="pincode" id="overlayPincode"></div>
-                        <div class="coordinates">Lat <span id="overlayLat">12.27933</span>° Long <span id="overlayLng">76.71011</span>°</div>
-                        <div class="date" id="overlayDate"></div>
+                        <div>Lat <span id="overlayLat">12.27933</span>° Long <span id="overlayLng">76.71011</span>°</div>
+                        <div id="overlayDate"></div>
                     </div>
                 </div>
             </div>
@@ -629,7 +625,7 @@
         function updateTemplateOverlay() {
             overlayTitle.textContent = locationTitleInput.value;
             overlayAddress.textContent = streetAddressInput.value;
-            overlayPincode.textContent = pincodeInput.value;
+            overlayPincode.textContent = pincodeInput.value ? `Pincode: ${pincodeInput.value}` : '';
             overlayLat.textContent = latitudeInput.value;
             overlayLng.textContent = longitudeInput.value;
             overlayDate.textContent = dateInput.value;
@@ -652,42 +648,58 @@
                     ctx.drawImage(img, 0, 0);
                     
                     // Calculate overlay dimensions
-                    const overlayHeight = Math.max(100, img.height * 0.2);
-                    const fontSize = Math.max(10, img.width * 0.012);
+                    const overlayHeight = Math.max(120, img.height * 0.25);
+                    const fontSize = Math.max(12, img.width * 0.015);
                     const titleFontSize = fontSize * 1.2;
-                    const padding = 10;
-                    const mapSize = 80;
-                    const mapX = padding;
-                    const mapY = img.height - overlayHeight + (overlayHeight - mapSize) / 2;
+                    const padding = Math.max(15, img.width * 0.03);
+                    let currentY = img.height - overlayHeight;
                     
                     // Draw overlay background
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    ctx.fillRect(0, img.height - overlayHeight, img.width, overlayHeight);
+                    ctx.fillRect(0, currentY, img.width, overlayHeight);
                     
                     // Draw map container
-                    ctx.fillStyle = '#111';
-                    ctx.fillRect(mapX, mapY, mapSize, mapSize);
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(mapX, mapY, mapSize, mapSize);
+                    const mapSize = overlayHeight * 0.8;
+                    const mapX = padding;
+                    const mapY = currentY + (overlayHeight - mapSize) / 2;
                     
                     if (mapImage.src && mapImage.src !== '') {
                         // Draw map image
                         const mapImg = new Image();
                         mapImg.onload = function() {
+                            // Draw white border
+                            ctx.strokeStyle = 'white';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(mapX, mapY, mapSize, mapSize);
+                            
+                            // Draw map image
                             ctx.drawImage(mapImg, mapX, mapY, mapSize, mapSize);
+                            
+                            // Draw text elements
                             drawTextElements();
+                            
+                            // Update final preview
                             finalImage.src = canvas.toDataURL('image/jpeg', 0.9);
                         };
                         mapImg.src = mapImage.src;
                     } else {
-                        // Draw placeholder text
+                        // If no map image, just draw a placeholder
+                        ctx.fillStyle = '#111';
+                        ctx.fillRect(mapX, mapY, mapSize, mapSize);
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(mapX, mapY, mapSize, mapSize);
+                        
                         ctx.fillStyle = 'white';
                         ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
                         ctx.textAlign = 'center';
                         ctx.fillText('MAP', mapX + mapSize/2, mapY + mapSize/2);
                         ctx.textAlign = 'left';
+                        
+                        // Draw text elements
                         drawTextElements();
+                        
+                        // Update final preview
                         finalImage.src = canvas.toDataURL('image/jpeg', 0.9);
                     }
                     
@@ -698,35 +710,35 @@
                         
                         // Calculate text position
                         const textX = mapX + mapSize + padding;
-                        let currentY = img.height - overlayHeight + padding + titleFontSize;
+                        currentY = mapY;
                         
                         // Draw title
-                        ctx.fillText(locationTitleInput.value, textX, currentY);
+                        ctx.fillText(locationTitleInput.value, textX, currentY + titleFontSize);
                         
                         // Draw address if available
                         if (streetAddressInput.value) {
                             ctx.font = `${fontSize}px 'Courier New', monospace`;
-                            currentY += (fontSize + 4);
-                            ctx.fillText(streetAddressInput.value, textX, currentY);
+                            currentY += (titleFontSize + 5);
+                            ctx.fillText(streetAddressInput.value, textX, currentY + fontSize);
                         }
                         
                         // Draw pincode if available
                         if (pincodeInput.value) {
-                            currentY += (fontSize + 4);
-                            ctx.fillText(pincodeInput.value, textX, currentY);
+                            currentY += (fontSize + 5);
+                            ctx.fillText(`Pincode: ${pincodeInput.value}`, textX, currentY + fontSize);
                         }
                         
                         // Draw coordinates
-                        currentY += (fontSize + 4);
+                        currentY += (fontSize + 5);
                         ctx.fillText(
                             `Lat ${latitudeInput.value}° Long ${longitudeInput.value}°`,
                             textX,
-                            currentY
+                            currentY + fontSize
                         );
                         
                         // Draw date
-                        currentY += (fontSize + 4);
-                        ctx.fillText(dateInput.value, textX, currentY);
+                        currentY += (fontSize + 5);
+                        ctx.fillText(dateInput.value, textX, currentY + fontSize);
                     }
                 };
                 
