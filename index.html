@@ -535,7 +535,7 @@
         const overlayLat = document.getElementById('overlayLat');
         const overlayLng = document.getElementById('overlayLng');
         const overlayDate = document.getElementById('overlayDate');
-
+         
         window.onload = function() {
     // Check if the page has been refreshed already during this session
     if (!sessionStorage.getItem('refreshed')) {
@@ -546,7 +546,7 @@
       location.reload();
     }
   };
-
+        alert('NOTE: If you find any Alignment issue in the final image, Kindly refresh the page');
         // Initialize with current date/time
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
